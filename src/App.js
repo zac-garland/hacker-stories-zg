@@ -2,7 +2,7 @@ import "./App.css";
 import React from "react";
 
 const App = () => {
-  const stories = [
+  const initialStories = [
     {
       title: "React",
       url: "https://reactjs.org",
@@ -34,6 +34,15 @@ const App = () => {
   };
 
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+  const [stories, setStories] = React.useState(initialStories);
+
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectId !== story.objectId
+    );
+
+    setStories(newStories);
+  };
 
   /*
   const [searchTerm, setSearchTerm] = React.useState(
@@ -46,8 +55,48 @@ const App = () => {
     localStorage.setItem("search", searchTerm);
   }, [searchTerm]);
 
-  */
+*/
 
+  const InputWithLabel = ({
+    id,
+    value,
+    type = "text",
+    onInputChange,
+    isFocused,
+    children,
+  }) => {
+    return (
+      <>
+        <label htmlFor={id}>{children}</label>
+        <input
+          id={id}
+          type={type}
+          autoFocus
+          value={value}
+          onChange={onInputChange}
+        />
+        <p>
+          Searching for <strong>{value}</strong>
+        </p>
+      </>
+    );
+  };
+  /*
+  const Search = ({ search, onSearch }) => {
+    //object destructuring vs. props.x
+  
+    return (
+      <>
+        <label htmlFor="search">Search: </label>
+        <input id="search" type="text" value={search} onChange={onSearch}></input>
+  
+        <p>
+          Searching for <strong>{search}</strong>
+        </p>
+      </>
+    );
+  };
+*/
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -57,32 +106,29 @@ const App = () => {
   });
 
   return (
-    <div>
+    <>
       <h1>Hello world</h1>
 
-      <Search search={searchTerm} onSearch={handleSearch} />
+      <InputWithLabel
+        id="search"
+        value={searchTerm}
+        onInputChange={handleSearch}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
+
       <hr />
-      <List list={searchedStories} />
-    </div>
+      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+    </>
   );
 };
 
-const Search = ({ search, onSearch }) => {
-  //object destructuring vs. props.x
+/*
+      <Search search={searchTerm} onSearch = {handleSearch}></Search>
 
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" value={search} onChange={onSearch}></input>
+*/
 
-      <p>
-        Searching for <strong>{search}</strong>
-      </p>
-    </div>
-  );
-};
-
-const Item = ({ item }) => {
+const Item = ({ item, onRemoveItem }) => {
   return (
     <li key={item.objectId}>
       <span>
@@ -91,15 +137,27 @@ const Item = ({ item }) => {
       <span>{item.author}</span>
       <span>{item.num_comments}</span>
       <span>{item.points}</span>
+      <span>
+        <button
+          type="button"
+          onClick={() => {
+            onRemoveItem(item);
+          }}
+        >
+          Dismiss
+        </button>
+      </span>
     </li>
   );
 };
 
-const List = ({ list }) => {
+const List = ({ list, onRemoveItem }) => {
   return (
     <ul>
       {list.map((item) => {
-        return <Item key={item.objectId} item={item} />;
+        return (
+          <Item key={item.objectId} item={item} onRemoveItem={onRemoveItem} />
+        );
       })}
     </ul>
   );
