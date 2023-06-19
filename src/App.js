@@ -1,6 +1,56 @@
 import "./App.css";
 import React from "react";
 
+const InputWithLabel = ({
+  id,
+  value,
+  type = "text",
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+  return (
+    <>
+      <label htmlFor={id}>{children}</label>
+      <input
+        id={id}
+        type={type}
+        autoFocus
+        value={value}
+        onChange={onInputChange}
+      />
+      <p>
+        Searching for <strong>{value}</strong>
+      </p>
+    </>
+  );
+};
+
+const useStorageState = (key, initialState) => {
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
+
+/*
+  const [searchTerm, setSearchTerm] = React.useState(
+    localStorage.getItem("search") || "React"
+  );
+
+  //ensures that if searchTerm is used in multiple locations, it's updated outside of a specific function
+  //useEffect takes in a side effect and dependencies of that sideEffect
+  React.useEffect(() => {
+    localStorage.setItem("search", searchTerm);
+  }, [searchTerm]);
+
+*/
+
 const App = () => {
   const initialStories = [
     {
@@ -21,82 +71,37 @@ const App = () => {
     },
   ];
 
-  const useStorageState = (key, initialState) => {
-    const [value, setValue] = React.useState(
-      localStorage.getItem(key) || initialState
-    );
+  const [searchTerm, setSearchTerm] = useStorageState("search", "");
+  const [stories, setStories] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
 
-    React.useEffect(() => {
-      localStorage.setItem(key, value);
-    }, [value, key]);
+  React.useEffect(() => {
+    const getAsyncStories = () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ data: { stories: initialStories } });
+        }, 2000);
+      });
+    };
 
-    return [value, setValue];
-  };
-
-  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
-  const [stories, setStories] = React.useState(initialStories);
+    setIsLoading(true);
+    getAsyncStories().then((result) => {
+      setStories(result.data.stories);
+      setIsLoading(false);
+    });
+  }, []);
 
   const handleRemoveStory = (item) => {
     const newStories = stories.filter(
-      (story) => item.objectId !== story.objectId
+      (story) => story.objectId !== undefined && item.objectId !== story.objectId
     );
-
+  
     setStories(newStories);
   };
-
-  /*
-  const [searchTerm, setSearchTerm] = React.useState(
-    localStorage.getItem("search") || "React"
-  );
-
-  //ensures that if searchTerm is used in multiple locations, it's updated outside of a specific function
-  //useEffect takes in a side effect and dependencies of that sideEffect
-  React.useEffect(() => {
-    localStorage.setItem("search", searchTerm);
-  }, [searchTerm]);
-
-*/
-
-  const InputWithLabel = ({
-    id,
-    value,
-    type = "text",
-    onInputChange,
-    isFocused,
-    children,
-  }) => {
-    return (
-      <>
-        <label htmlFor={id}>{children}</label>
-        <input
-          id={id}
-          type={type}
-          autoFocus
-          value={value}
-          onChange={onInputChange}
-        />
-        <p>
-          Searching for <strong>{value}</strong>
-        </p>
-      </>
-    );
-  };
-  /*
-  const Search = ({ search, onSearch }) => {
-    //object destructuring vs. props.x
   
-    return (
-      <>
-        <label htmlFor="search">Search: </label>
-        <input id="search" type="text" value={search} onChange={onSearch}></input>
-  
-        <p>
-          Searching for <strong>{search}</strong>
-        </p>
-      </>
-    );
-  };
-*/
+
+
+
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -118,7 +123,11 @@ const App = () => {
       </InputWithLabel>
 
       <hr />
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      {isLoading ? (
+        <p>Loading....</p>
+      ) : (
+        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      )}
     </>
   );
 };
@@ -164,6 +173,23 @@ const List = ({ list, onRemoveItem }) => {
 };
 
 export default App;
+
+/*
+  const Search = ({ search, onSearch }) => {
+    //object destructuring vs. props.x
+  
+    return (
+      <>
+        <label htmlFor="search">Search: </label>
+        <input id="search" type="text" value={search} onChange={onSearch}></input>
+  
+        <p>
+          Searching for <strong>{search}</strong>
+        </p>
+      </>
+    );
+  };
+*/
 
 /*
 
